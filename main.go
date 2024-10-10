@@ -53,6 +53,51 @@ func main() {
 		})
 	})
 
+	// 接收前端传递的参数,场景一:URL参数,如：http://localhost:8082/hello2?name=张三
+	ginServer.GET("/hello2", func(context *gin.Context) {
+		name := context.Query("name")
+		context.JSON(200, gin.H{
+			"message": "Hello, " + name,
+		})
+	})
+
+	// 接收前端传递的参数,场景二:表单参数
+	ginServer.POST("/hello3", func(context *gin.Context) {
+		name := context.PostForm("name")
+		context.JSON(200, gin.H{
+			"message": "Hello, " + name,
+		})
+	})
+
+	// 接收前端传递的参数,场景三:JSON参数
+	ginServer.POST("/hello4", func(context *gin.Context) {
+		var jsonParam map[string]interface{}
+		context.BindJSON(&jsonParam)
+		context.JSON(200, gin.H{
+			"message": "Hello, " + jsonParam["name"].(string),
+		})
+	})
+
+	// 接收前端传递的参数,场景四:路径参数
+	ginServer.GET("/hello5/:name", func(context *gin.Context) {
+		name := context.Param("name")
+		context.JSON(200, gin.H{
+			"message": "Hello, " + name,
+		})
+	})
+
+	//	注册一个路由,301,重定向至百度
+	ginServer.GET("/baidu", func(context *gin.Context) {
+		context.Redirect(http.StatusMovedPermanently, "https://www.baidu.com")
+	})
+
+	//	注册一个路由,404,跳自定义的404页面
+	ginServer.NoRoute(func(context *gin.Context) {
+		context.HTML(http.StatusNotFound, "404.html", gin.H{
+			"msg": "404,页面找不到",
+		})
+	})
+
 	//	服务器监听端口
 	ginServer.Run(":8082")
 
