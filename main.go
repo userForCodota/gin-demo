@@ -98,7 +98,62 @@ func main() {
 		})
 	})
 
+	// 路由组,以user下add/modify/delete为例
+	userGroup := ginServer.Group("/user")
+	{
+		// 组合之后就是访问/user/add
+		userGroup.GET("/add", func(context *gin.Context) {
+			context.JSON(200, gin.H{
+				"message": "user add",
+			})
+		})
+		// 组合之后就是访问/user/modify
+		userGroup.GET("/modify", func(context *gin.Context) {
+			context.JSON(200, gin.H{
+				"message": "user modify",
+			})
+		})
+		// 组合之后就是访问/user/delete
+		userGroup.GET("/delete", func(context *gin.Context) {
+			context.JSON(200, gin.H{
+				"message": "user delete",
+			})
+		})
+	}
+
+	// 中间件/拦截器,模拟访问"/user/add2"之前进行拦截,使用`myInterceptorHandler`拦截器
+	// 测试,完整访问路径:http://localhost:8082/user/add2?token=123
+	ginServer.GET("/user/add2", myInterceptorHandler(), func(context *gin.Context) {
+		interceptorMsg := context.MustGet("interceptor-msg").(string)
+		context.JSON(200, gin.H{
+			"message":        "user add",
+			"interceptorMsg": interceptorMsg,
+		})
+	})
+
 	//	服务器监听端口
 	ginServer.Run(":8082")
 
+}
+
+// 设计一个拦截器:不接受参数，返回一个gin.HandlerFunc类型的函数
+func myInterceptorHandler() gin.HandlerFunc {
+	return func(context *gin.Context) {
+		// 前置处理：获取用户登录信息
+		token := context.GetHeader("token")
+		if token == "" {
+			context.Abort() // 终止后续的处理函数,也就是说调用了Abort()之后，后续的处理函数不会再执行
+			context.JSON(http.StatusUnauthorized, gin.H{
+				"message": "未登录",
+			})
+			return
+		}
+		// 后置处理：记录用户访问日志,模拟记录日志,记录token
+		println("token:", token)
+
+		// 增加一个参数
+		context.Set("interceptor-msg", "看到我说明拦截器生效了")
+
+		context.Next() // 调用Next()之后，后续的处理函数会继续执行
+	}
 }
