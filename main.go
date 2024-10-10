@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/thinkerou/favicon"
+	"net/http"
 )
 
 func main() {
@@ -37,6 +38,14 @@ func main() {
 	ginServer.DELETE("/hello", func(context *gin.Context) {
 		context.JSON(200, gin.H{
 			"message": "Hello, world!",
+		})
+	})
+
+	// 响应一个页面给前端
+	ginServer.LoadHTMLGlob("templates/*") // 加载全部模板文件
+	ginServer.GET("/index", func(context *gin.Context) {
+		context.HTML(http.StatusOK, "index.html", gin.H{
+			"msg": "这是go后台传递来的数据",
 		})
 	})
 
